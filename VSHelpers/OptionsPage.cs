@@ -8,8 +8,7 @@ using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
-using System.Text;
-
+using System.Text; 
 
 namespace BD.VSHelpers
 {

@@ -196,31 +196,7 @@ namespace BD.VSHelpers
                 }
             }
             return null;
-        }
-
-
-        //private CodeElement GetCodeElementAtTextPoint(vsCMElement requestedCodeElement, CodeElements codeElements, TextPoint txtPoint)
-        //{
-        //    if (codeElements == null)
-        //    {
-        //        return null;
-        //    }
-
-        //    foreach (CodeElement item in codeElements)
-        //    {
-        //        if (item.StartPoint.LessThan(txtPoint) && item.EndPoint.GreaterThan(txtPoint))
-        //        {
-        //            Debug.WriteLine(item.ToDebugPrint());
-        //            var codeElementMembers = GetCodeElementMembers(item);
-        //            var memberCodeElement = GetCodeElementAtTextPoint(requestedCodeElement, codeElementMembers, txtPoint);
-        //            if (memberCodeElement != null)
-        //            {
-        //                return memberCodeElement;
-        //            }
-        //        }
-        //    }
-        //    return null;
-        //}
+        } 
 
         private CodeElements GetCodeElementMembers(CodeElement codeElement)
         {
