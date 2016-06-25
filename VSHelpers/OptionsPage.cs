@@ -20,15 +20,25 @@ namespace BD.VSHelpers
         public const string CategoryName = "General";
         private CopyFormat optionValue = CopyFormat.Slack;
 
+        /// <summary>
+        /// Format for the text being copied
+        /// </summary>
+        [Description("Copy format option")]
         public enum CopyFormat
         {
+            /// <summary>
+            /// Use Slack's markdown format
+            /// </summary>
             Slack,
-            Skype
+            /// <summary>
+            /// Use Rich Text
+            /// </summary>
+            RTF
         }
 
         [Category(CategoryName)]
         [DisplayName("Copy format")]
-        [Description("Specify the target application where the copied text will be used.")]
+        [Description("Specify the format for the copied text.")]
         public CopyFormat ClipboardFormat
         {
             get { return optionValue; }

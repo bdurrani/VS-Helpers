@@ -9,6 +9,8 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Linq;
+using System.Windows.Forms;
 
 namespace BD.VSHelpers
 {
@@ -30,12 +32,13 @@ namespace BD.VSHelpers
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)]
     // This attribute is needed to let the shell know that this package exposes some menus.
     [ProvideMenuResource("Menus.ctmenu", 1)]
-        // auto-load the extension instead on on-demand: http://www.mztools.com/articles/2013/MZ2013027.aspx
+    // auto-load the extension instead on on-demand: http://www.mztools.com/articles/2013/MZ2013027.aspx
     [ProvideAutoLoad(VSConstants.UICONTEXT.NoSolution_string)]
     [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExists_string)]
     [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionHasMultipleProjects_string)]
     [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionHasSingleProject_string)]
     [Guid(GuidList.guidVSHelpersPkgString)]
+    [ProvideOptionPage(typeof(OptionPageGrid), "VS Helpers", OptionPageGrid.CategoryName, 0, 0, false)]
     public sealed class VSHelpersPackage : Package
     {
         /// <summary>
@@ -48,9 +51,7 @@ namespace BD.VSHelpers
         public VSHelpersPackage()
         {
             Debug.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering constructor for: {0}", this.ToString()));
-        }
-
-
+        } 
 
         /////////////////////////////////////////////////////////////////////////////
         // Overridden Package Implementation
@@ -62,15 +63,15 @@ namespace BD.VSHelpers
         /// </summary>
         protected override void Initialize()
         {
-            Debug.WriteLine (string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this.ToString()));
+            Debug.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this.ToString()));
             base.Initialize();
 
             // Add our command handlers for menu (commands must exist in the .vsct file)
             OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
-            if ( null != mcs )
+            if (null != mcs)
             {
                 // Create the command for the menu item.
-               CommandID menuCommandID = new CommandID(GuidList.guidVSHelpersCmdSet, (int)PkgCmdIDList.cmdidCopyWithContext);
+                CommandID menuCommandID = new CommandID(GuidList.guidVSHelpersCmdSet, (int)PkgCmdIDList.cmdidCopyWithContext);
                 var menuItem = new OleMenuCommand(MenuItemCallback, menuCommandID);
                 menuItem.BeforeQueryStatus += MenuCommand_BeforeQueryStatus;
                 mcs.AddCommand(menuItem);
@@ -89,7 +90,7 @@ namespace BD.VSHelpers
                 menuCommand.Enabled = isSolutionOpen;
             }
         }
-        
+
         #endregion
 
         /// <summary>
@@ -99,7 +100,6 @@ namespace BD.VSHelpers
         /// </summary> 
         private void MenuItemCallback(object sender, EventArgs e)
         {
-            OptionPageGrid page = (OptionPageGrid)GetDialogPage(typeof(OptionPageGrid));
             var dte = (EnvDTE80.DTE2)GetService(typeof(EnvDTE.DTE));
             CopyCurrentMethod(dte);
         }
@@ -122,8 +122,20 @@ namespace BD.VSHelpers
             var selectionText = selection.Text.Trim();
             var txtPoint = GetCursorTextPoint(dte);
             string location = GetCodeElementNonRecursively(dte.ActiveDocument.ProjectItem.FileCodeModel.CodeElements, txtPoint);
-            string result = string.Format("```\n{0}\n```\n{2} Line {1}", selectionText, selection.CurrentLine, location);
-            System.Windows.Clipboard.SetText(result);
+            OptionPageGrid page = (OptionPageGrid)GetDialogPage(typeof(OptionPageGrid));
+            if (page.ClipboardFormat == OptionPageGrid.CopyFormat.Slack)
+            {
+                string result = string.Format("```\n{0}\n```\n{2} Line {1}", selectionText, selection.CurrentLine, location);
+                System.Windows.Clipboard.SetText(result);
+            }
+
+            if (page.ClipboardFormat == OptionPageGrid.CopyFormat.RTF)
+            {
+                var rtf = new RichTextBox();
+                rtf.Font = new System.Drawing.Font("Consolas", 10);
+                rtf.Text = selectionText;
+                System.Windows.Clipboard.SetText(rtf.Rtf, System.Windows.TextDataFormat.Rtf);
+            }
         }
 
         private TextPoint GetCursorTextPoint(DTE2 dte)
