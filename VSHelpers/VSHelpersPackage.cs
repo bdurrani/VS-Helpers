@@ -134,6 +134,8 @@ namespace BD.VSHelpers
                 var rtf = new RichTextBox();
                 rtf.Font = new System.Drawing.Font("Consolas", 10);
                 rtf.Text = selectionText;
+                rtf.Font = new System.Drawing.Font("Calibri", 11);
+                rtf.AppendText(string.Format("\n{0}, Line {1}", location, selection.CurrentLine));
                 System.Windows.Clipboard.SetText(rtf.Rtf, System.Windows.TextDataFormat.Rtf);
             }
         }
