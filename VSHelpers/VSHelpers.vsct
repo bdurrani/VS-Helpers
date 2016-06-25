@@ -91,6 +91,16 @@
             <CommandFlag>DefaultInvisible</CommandFlag>
             <CommandFlag>DynamicVisibility</CommandFlag>
         </Button>
+        <Button guid="guidVSHelpersCmdSet" id="cmdidStartWithoutDebug" priority="0x0101" type="Button">
+            <Parent guid="guidVSHelpersCmdSet" id="MyMenuGroup" />
+            <Icon guid="guidImages" id="bmpPic1" />
+            <Strings>
+                <ButtonText>Start Without Debugging</ButtonText>
+            </Strings>
+            <CommandFlag>DefaultDisabled</CommandFlag>
+            <CommandFlag>DefaultInvisible</CommandFlag>
+            <CommandFlag>DynamicVisibility</CommandFlag>
+        </Button>
 
     </Buttons>
    
@@ -124,9 +134,8 @@
         <IDSymbol name="TopLevelMenu" value="0x1021"/>
         <IDSymbol name="MyMenuGroup" value="0x1020" />
         <IDSymbol name="cmdidCopyWithContext" value="0x0100" />
-    </GuidSymbol>
-    
-    
+        <IDSymbol name="cmdidStartWithoutDebug" value="0x0101" />
+    </GuidSymbol> 
     
     <GuidSymbol name="guidImages" value="{08a7c380-0585-4d15-84da-bf6e41045397}" >
       <IDSymbol name="bmpPic1" value="1" />

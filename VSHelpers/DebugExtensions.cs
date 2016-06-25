@@ -1,5 +1,6 @@
 using EnvDTE;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace BD.VSHelpers
@@ -40,6 +41,43 @@ namespace BD.VSHelpers
                 var currentDoc = documents.Item(i);
                 Debug.WriteLine("document name:" + currentDoc.Name);
             } 
+        }
+
+        /// <summary>
+        /// Print debug into for a collection of projects
+        /// </summary>
+        /// <param name="projects">projet collection</param>
+        public static void ToDebugPrint(this IEnumerable<Project> projects)
+        { 
+            foreach (Project item in projects)
+            {
+                item.ToDebugPrint();
+            }
+        }
+
+        /// <summary>
+        /// Print debug info for project
+        /// </summary>
+        /// <param name="project">project to debug</param>
+        public static void ToDebugPrint(this EnvDTE.Project project)
+        {
+            string output;
+            if (string.IsNullOrEmpty(project.FullName))
+            {
+                output = "Empty project name"; 
+            }
+            else
+            {
+                // full name: <fully qualified path to project>.csproj
+                // language will be a guid
+                output = string.Format("project name: {0} name: {1} code model: {2} unique name: {3}", project.FullName, project.Name, project.CodeModel.Language, project.UniqueName);
+            }
+            Debug.WriteLine(output);
+        }
+
+        public static void ToDebugPrint(this EnvDTE.OutputGroup outputGroup)
+        {
+            Debug.WriteLine("canonicalname: " + outputGroup.CanonicalName + " description: " + outputGroup.Description + " displayname: " + outputGroup.DisplayName);
         }
 
         public static void TestCodeElementAtCurrentPoint(VirtualPoint activePoint)

@@ -1,15 +1,17 @@
-﻿using EnvDTE;
+﻿using BD.VSHelpers.WMI.Win32;
+using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using System;
-using System.ComponentModel;
+using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Linq;
 using System.Windows.Forms;
 
 namespace BD.VSHelpers
@@ -40,7 +42,11 @@ namespace BD.VSHelpers
     [Guid(GuidList.guidVSHelpersPkgString)]
     [ProvideOptionPage(typeof(OptionPageGrid), "VS Helpers", OptionPageGrid.CategoryName, 0, 0, false)]
     public sealed class VSHelpersPackage : Package
-    {
+    { 
+        private DTEEvents _packageEvents;
+        private ProcessWatcher _procWatcher;
+        private List<Project> projects = new List<Project>();
+
         /// <summary>
         /// Default constructor of the package.
         /// Inside this method you can place any initialization code that does not require 
@@ -51,7 +57,7 @@ namespace BD.VSHelpers
         public VSHelpersPackage()
         {
             Debug.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering constructor for: {0}", this.ToString()));
-        } 
+        }
 
         /////////////////////////////////////////////////////////////////////////////
         // Overridden Package Implementation
@@ -68,14 +74,39 @@ namespace BD.VSHelpers
 
             // Add our command handlers for menu (commands must exist in the .vsct file)
             OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
-            if (null != mcs)
+            if (mcs == null)
             {
-                // Create the command for the menu item.
-                CommandID menuCommandID = new CommandID(GuidList.guidVSHelpersCmdSet, (int)PkgCmdIDList.cmdidCopyWithContext);
-                var menuItem = new OleMenuCommand(MenuItemCallback, menuCommandID);
-                menuItem.BeforeQueryStatus += MenuCommand_BeforeQueryStatus;
-                mcs.AddCommand(menuItem);
+                return;
             }
+
+            var dte = GetDTE();
+            _packageEvents = dte.Events.DTEEvents;
+            _packageEvents.OnBeginShutdown += PackageEvents_OnBeginShutdown;
+
+            AddCopyWithContextMenu(mcs);
+            AddStartWithoutDebugging(mcs);
+        }
+
+        void PackageEvents_OnBeginShutdown()
+        {
+            CleanupProcWatcher();
+        }
+
+        private void AddStartWithoutDebugging(OleMenuCommandService mcs)
+        {
+            CommandID menuCommandID = new CommandID(GuidList.guidVSHelpersCmdSet, (int)PkgCmdIDList.cmdidStartWithoutDebug);
+            var menuItem = new OleMenuCommand(StartWithoutDebugging_MenuItemCallback, menuCommandID);
+            menuItem.BeforeQueryStatus += MenuCommand_BeforeQueryStatus;
+            mcs.AddCommand(menuItem);
+        }
+
+        private void AddCopyWithContextMenu(OleMenuCommandService mcs)
+        {
+            // Create the command for the menu item.
+            CommandID menuCommandID = new CommandID(GuidList.guidVSHelpersCmdSet, (int)PkgCmdIDList.cmdidCopyWithContext);
+            var menuItem = new OleMenuCommand(MenuItemCallback, menuCommandID);
+            menuItem.BeforeQueryStatus += MenuCommand_BeforeQueryStatus;
+            mcs.AddCommand(menuItem);
         }
 
         void MenuCommand_BeforeQueryStatus(object sender, EventArgs e)
@@ -83,7 +114,7 @@ namespace BD.VSHelpers
             var menuCommand = sender as OleMenuCommand;
             if (menuCommand != null)
             {
-                var dte = (EnvDTE80.DTE2)GetService(typeof(EnvDTE.DTE));
+                var dte = GetDTE();
                 Solution solution = (Solution)dte.Solution;
                 bool isSolutionOpen = solution.IsOpen;
                 menuCommand.Visible = isSolutionOpen;
@@ -94,13 +125,154 @@ namespace BD.VSHelpers
         #endregion
 
         /// <summary>
+        /// Gets the DTE
+        /// </summary>
+        /// <returns>DTE2</returns>
+        private EnvDTE80.DTE2 GetDTE()
+        {
+            return (EnvDTE80.DTE2)GetService(typeof(EnvDTE.DTE));
+        }
+
+        private void StartWithoutDebugging_MenuItemCallback(object sender, EventArgs e)
+        {
+            var dte = GetDTE();
+            //dte.ExecuteCommand("Debug.StartWithoutDebugging");
+
+            SolutionBuild2 sb = (SolutionBuild2)dte.Solution.SolutionBuild;
+
+            // get the name of the active project
+            string startupProjectUniqueName = (string)((Array)sb.StartupProjects).GetValue(0);
+
+            //IVsSolutionBuildManager solutionBuildManager = base.GetService(typeof(SVsSolutionBuildManager)) as IVsSolutionBuildManager;
+            //IVsHierarchy ppHierarchy;
+            //solutionBuildManager.get_StartupProject(out ppHierarchy);
+            //if(ppHierarchy != null)
+            //{
+            //    var xproj = ppHierarchy as IVsProject3;
+            //    var d = xproj.ToString();
+            //}
+
+            projects.Clear();
+            foreach (EnvDTE.Project project in dte.Solution.Projects)
+            {
+                GetAllProjectsFromProject(project);
+            }
+
+            projects.ToDebugPrint();
+
+            // find the start up project
+            var startupProject = projects.Where(x => !string.IsNullOrEmpty(x.Name) && string.Equals(x.UniqueName, startupProjectUniqueName));
+            if (!startupProject.Any())
+            {
+                // no startup project found
+                return;
+            }
+
+            // try to figure out the build outputs of the project
+            var outputGroups = startupProject.First().ConfigurationManager.ActiveConfiguration.OutputGroups.OfType<EnvDTE.OutputGroup>();
+            //foreach (OutputGroup group in outputGroups)
+            //{
+            //    group.ToDebugPrint();
+            //}
+
+            var builtGroup = outputGroups.First(x => x.CanonicalName == "Built");
+
+            var fileUrls = ((object[])builtGroup.FileURLs).OfType<string>();
+            var executables = fileUrls.Where(x => x.EndsWith(".exe", StringComparison.OrdinalIgnoreCase));
+
+            if (!executables.Any())
+            {
+                return;
+            }
+
+            string activeProjectExePath = new Uri(executables.First(), UriKind.Absolute).LocalPath;
+            string activeExePath = Path.GetFileName(activeProjectExePath);
+
+            CleanupProcWatcher();
+
+            _procWatcher = new ProcessWatcher(activeExePath);
+            _procWatcher.ProcessCreated += ProcWatcher_ProcessCreated;
+            _procWatcher.ProcessDeleted += ProcWatcher_ProcessDeleted;
+            _procWatcher.Start();
+
+            // this will get all the build output paths for the active project
+            var outputFolders = new List<string>();
+            foreach (var strUri in fileUrls)
+            {
+                var uri = new Uri(strUri, UriKind.Absolute);
+                var filePath = uri.LocalPath;
+                var folderPath = Path.GetDirectoryName(filePath);
+                outputFolders.Add(folderPath.ToLower());
+            }
+            return;
+        }
+
+        private void AttachToProcess(string processName)
+        {
+            var dte = GetDTE();
+            Processes processes = dte.Debugger.LocalProcesses;
+            var process = processes.Cast<EnvDTE.Process>().Where(proc => proc.Name.Contains(processName));
+            if(!process.Any())
+            {
+                return;
+            }
+
+            process.First().Attach(); 
+        }
+
+        private void CleanupProcWatcher()
+        {
+            if (_procWatcher != null)
+            {
+                _procWatcher.ProcessCreated -= ProcWatcher_ProcessCreated;
+                _procWatcher.ProcessDeleted -= ProcWatcher_ProcessDeleted;
+                _procWatcher.Dispose();
+                _procWatcher = null;
+            }
+        }
+
+        void ProcWatcher_ProcessDeleted(Win32_Process process)
+        {
+            Debug.WriteLine("process deleted");
+        }
+
+        void ProcWatcher_ProcessCreated(Win32_Process process)
+        {
+            string name = process.Name;
+            Debug.WriteLine("process created");
+            AttachToProcess(name);
+        }
+
+
+        private void GetAllProjectsFromProject(Project project)
+        {
+            if (project == null)
+            {
+                return;
+            }
+
+            projects.Add(project);
+
+            if (project.ProjectItems != null)
+            {
+                foreach (ProjectItem item in project.ProjectItems)
+                {
+                    if (item != null)
+                    {
+                        GetAllProjectsFromProject(item.Object as Project);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// This function is the callback used to execute a command when the a menu item is clicked.
         /// See the Initialize method to see how the menu item is associated to this function using
         /// the OleMenuCommandService service and the MenuCommand class.
         /// </summary> 
         private void MenuItemCallback(object sender, EventArgs e)
         {
-            var dte = (EnvDTE80.DTE2)GetService(typeof(EnvDTE.DTE));
+            var dte = GetDTE();
             CopyCurrentMethod(dte);
         }
 
@@ -134,6 +306,8 @@ namespace BD.VSHelpers
                 var rtf = new RichTextBox();
                 rtf.Font = new System.Drawing.Font("Consolas", 10);
                 rtf.Text = selectionText;
+                rtf.Font = new System.Drawing.Font("Calibri", 11);
+                rtf.AppendText(string.Format("\n{0}, Line {1}", location, selection.CurrentLine));
                 System.Windows.Clipboard.SetText(rtf.Rtf, System.Windows.TextDataFormat.Rtf);
             }
         }
@@ -196,7 +370,7 @@ namespace BD.VSHelpers
                 }
             }
             return null;
-        } 
+        }
 
         private CodeElements GetCodeElementMembers(CodeElement codeElement)
         {

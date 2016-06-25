@@ -4,6 +4,7 @@
         <Identity Id="a5a713b9-14a4-4376-ba18-107c20af20ec" Version="1.0" Language="en-US" Publisher="Bilal Durrani" />
         <DisplayName>Visual Studio Helpers</DisplayName>
         <Description xml:space="preserve">Visual Studio Helper commands</Description>
+        <License>LICENSE</License>
     </Metadata>
     <Installation InstalledByMsi="false">
         <InstallationTarget Id="Microsoft.VisualStudio.Pro" Version="[12.0]" />
