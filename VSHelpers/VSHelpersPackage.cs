@@ -1,4 +1,5 @@
-﻿using BD.VSHelpers.WMI.Win32;
+﻿using BD.VSHelpers.Commands;
+using BD.VSHelpers.WMI.Win32;
 using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio;
@@ -45,7 +46,6 @@ namespace BD.VSHelpers
     { 
         private DTEEvents _packageEvents;
         private ProcessWatcher _procWatcher;
-        private List<Project> projects = new List<Project>();
 
         /// <summary>
         /// Default constructor of the package.
@@ -84,7 +84,8 @@ namespace BD.VSHelpers
             _packageEvents.OnBeginShutdown += PackageEvents_OnBeginShutdown;
 
             AddCopyWithContextMenu(mcs);
-            AddStartWithoutDebugging(mcs);
+            mcs.AddCommand(new RunWithoutDebugCommand(this));
+            //AddStartWithoutDebugging(mcs);
         }
 
         void PackageEvents_OnBeginShutdown()
@@ -128,7 +129,7 @@ namespace BD.VSHelpers
         /// Gets the DTE
         /// </summary>
         /// <returns>DTE2</returns>
-        private EnvDTE80.DTE2 GetDTE()
+        public EnvDTE80.DTE2 GetDTE()
         {
             return (EnvDTE80.DTE2)GetService(typeof(EnvDTE.DTE));
         }
@@ -136,32 +137,22 @@ namespace BD.VSHelpers
         private void StartWithoutDebugging_MenuItemCallback(object sender, EventArgs e)
         {
             var dte = GetDTE();
-            //dte.ExecuteCommand("Debug.StartWithoutDebugging");
 
             SolutionBuild2 sb = (SolutionBuild2)dte.Solution.SolutionBuild;
 
             // get the name of the active project
             string startupProjectUniqueName = (string)((Array)sb.StartupProjects).GetValue(0);
 
-            //IVsSolutionBuildManager solutionBuildManager = base.GetService(typeof(SVsSolutionBuildManager)) as IVsSolutionBuildManager;
-            //IVsHierarchy ppHierarchy;
-            //solutionBuildManager.get_StartupProject(out ppHierarchy);
-            //if(ppHierarchy != null)
-            //{
-            //    var xproj = ppHierarchy as IVsProject3;
-            //    var d = xproj.ToString();
-            //}
-
-            projects.Clear();
+            var results = new List<Project>();
             foreach (EnvDTE.Project project in dte.Solution.Projects)
             {
-                GetAllProjectsFromProject(project);
+                GetAllProjectsFromProject(project, results);
             }
 
-            projects.ToDebugPrint();
+            results.ToDebugPrint();
 
             // find the start up project
-            var startupProject = projects.Where(x => !string.IsNullOrEmpty(x.Name) && string.Equals(x.UniqueName, startupProjectUniqueName));
+            var startupProject = results.Where(x => !string.IsNullOrEmpty(x.Name) && string.Equals(x.UniqueName, startupProjectUniqueName));
             if (!startupProject.Any())
             {
                 // no startup project found
@@ -194,6 +185,8 @@ namespace BD.VSHelpers
             _procWatcher.ProcessCreated += ProcWatcher_ProcessCreated;
             _procWatcher.ProcessDeleted += ProcWatcher_ProcessDeleted;
             _procWatcher.Start();
+
+            dte.ExecuteCommand("Debug.StartWithoutDebugging");
 
             // this will get all the build output paths for the active project
             var outputFolders = new List<string>();
@@ -243,27 +236,28 @@ namespace BD.VSHelpers
             AttachToProcess(name);
         }
 
-
-        private void GetAllProjectsFromProject(Project project)
+        private void GetAllProjectsFromProject(Project project, List<Project> result)
         {
             if (project == null)
             {
                 return;
             }
 
-            projects.Add(project);
+            result.Add(project);
 
-            if (project.ProjectItems != null)
+            if(project.ProjectItems == null)
             {
-                foreach (ProjectItem item in project.ProjectItems)
-                {
-                    if (item != null)
-                    {
-                        GetAllProjectsFromProject(item.Object as Project);
-                    }
-                }
+                return;
             }
-        }
+
+            foreach (ProjectItem item in project.ProjectItems)
+            {
+                if (item != null)
+                {
+                    GetAllProjectsFromProject(item.Object as Project, result);
+                }
+            } 
+        } 
 
         /// <summary>
         /// This function is the callback used to execute a command when the a menu item is clicked.

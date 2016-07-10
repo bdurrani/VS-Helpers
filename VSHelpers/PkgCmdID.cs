@@ -6,9 +6,7 @@ namespace BD.VSHelpers
 {
     static class PkgCmdIDList
     {
-        public const uint cmdidCopyWithContext =        0x100;
-        public const uint cmdidStartWithoutDebug =        0x101;
-
-
+        public const uint cmdidCopyWithContext = 0x100;
+        public const uint cmdidStartWithoutDebug = 0x101; 
     };
 }

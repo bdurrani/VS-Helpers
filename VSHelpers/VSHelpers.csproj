@@ -123,6 +123,8 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\BaseCommand.cs" />
+    <Compile Include="Commands\RunWithoutDebugCommand.cs" />
     <Compile Include="DebugExtensions.cs" />
     <Compile Include="Guids.cs" />
     <Compile Include="OptionsPage.cs">
