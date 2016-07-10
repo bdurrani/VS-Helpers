@@ -1,5 +1,4 @@
 ﻿using BD.VSHelpers.Commands;
-using BD.VSHelpers.WMI.Win32;
 using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio;
@@ -9,8 +8,6 @@ using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Globalization;
-using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
@@ -44,8 +41,8 @@ namespace BD.VSHelpers
     [ProvideOptionPage(typeof(OptionPageGrid), "VS Helpers", OptionPageGrid.CategoryName, 0, 0, false)]
     public sealed class VSHelpersPackage : Package
     { 
-        private DTEEvents _packageEvents;
-        private ProcessWatcher _procWatcher;
+        private DTEEvents _packageEvents; 
+        private List<BaseCommand> _commands = new List<BaseCommand>();
 
         /// <summary>
         /// Default constructor of the package.
@@ -84,21 +81,22 @@ namespace BD.VSHelpers
             _packageEvents.OnBeginShutdown += PackageEvents_OnBeginShutdown;
 
             AddCopyWithContextMenu(mcs);
-            mcs.AddCommand(new RunWithoutDebugCommand(this));
-            //AddStartWithoutDebugging(mcs);
+
+            _commands.Add(new RunWithoutDebugCommand(this));
+            foreach (var command in _commands)
+            {
+                mcs.AddCommand(command);
+            }
         }
 
         void PackageEvents_OnBeginShutdown()
         {
-            CleanupProcWatcher();
-        }
-
-        private void AddStartWithoutDebugging(OleMenuCommandService mcs)
-        {
-            CommandID menuCommandID = new CommandID(GuidList.guidVSHelpersCmdSet, (int)PkgCmdIDList.cmdidStartWithoutDebug);
-            var menuItem = new OleMenuCommand(StartWithoutDebugging_MenuItemCallback, menuCommandID);
-            menuItem.BeforeQueryStatus += MenuCommand_BeforeQueryStatus;
-            mcs.AddCommand(menuItem);
+            // clean up any commands
+            foreach (var command in _commands)
+            {
+                command.Dispose();
+            }
+            _commands.Clear();
         }
 
         private void AddCopyWithContextMenu(OleMenuCommandService mcs)
@@ -133,131 +131,6 @@ namespace BD.VSHelpers
         {
             return (EnvDTE80.DTE2)GetService(typeof(EnvDTE.DTE));
         }
-
-        private void StartWithoutDebugging_MenuItemCallback(object sender, EventArgs e)
-        {
-            var dte = GetDTE();
-
-            SolutionBuild2 sb = (SolutionBuild2)dte.Solution.SolutionBuild;
-
-            // get the name of the active project
-            string startupProjectUniqueName = (string)((Array)sb.StartupProjects).GetValue(0);
-
-            var results = new List<Project>();
-            foreach (EnvDTE.Project project in dte.Solution.Projects)
-            {
-                GetAllProjectsFromProject(project, results);
-            }
-
-            results.ToDebugPrint();
-
-            // find the start up project
-            var startupProject = results.Where(x => !string.IsNullOrEmpty(x.Name) && string.Equals(x.UniqueName, startupProjectUniqueName));
-            if (!startupProject.Any())
-            {
-                // no startup project found
-                return;
-            }
-
-            // try to figure out the build outputs of the project
-            var outputGroups = startupProject.First().ConfigurationManager.ActiveConfiguration.OutputGroups.OfType<EnvDTE.OutputGroup>();
-            //foreach (OutputGroup group in outputGroups)
-            //{
-            //    group.ToDebugPrint();
-            //}
-
-            var builtGroup = outputGroups.First(x => x.CanonicalName == "Built");
-
-            var fileUrls = ((object[])builtGroup.FileURLs).OfType<string>();
-            var executables = fileUrls.Where(x => x.EndsWith(".exe", StringComparison.OrdinalIgnoreCase));
-
-            if (!executables.Any())
-            {
-                return;
-            }
-
-            string activeProjectExePath = new Uri(executables.First(), UriKind.Absolute).LocalPath;
-            string activeExePath = Path.GetFileName(activeProjectExePath);
-
-            CleanupProcWatcher();
-
-            _procWatcher = new ProcessWatcher(activeExePath);
-            _procWatcher.ProcessCreated += ProcWatcher_ProcessCreated;
-            _procWatcher.ProcessDeleted += ProcWatcher_ProcessDeleted;
-            _procWatcher.Start();
-
-            dte.ExecuteCommand("Debug.StartWithoutDebugging");
-
-            // this will get all the build output paths for the active project
-            var outputFolders = new List<string>();
-            foreach (var strUri in fileUrls)
-            {
-                var uri = new Uri(strUri, UriKind.Absolute);
-                var filePath = uri.LocalPath;
-                var folderPath = Path.GetDirectoryName(filePath);
-                outputFolders.Add(folderPath.ToLower());
-            }
-            return;
-        }
-
-        private void AttachToProcess(string processName)
-        {
-            var dte = GetDTE();
-            Processes processes = dte.Debugger.LocalProcesses;
-            var process = processes.Cast<EnvDTE.Process>().Where(proc => proc.Name.Contains(processName));
-            if(!process.Any())
-            {
-                return;
-            }
-
-            process.First().Attach(); 
-        }
-
-        private void CleanupProcWatcher()
-        {
-            if (_procWatcher != null)
-            {
-                _procWatcher.ProcessCreated -= ProcWatcher_ProcessCreated;
-                _procWatcher.ProcessDeleted -= ProcWatcher_ProcessDeleted;
-                _procWatcher.Dispose();
-                _procWatcher = null;
-            }
-        }
-
-        void ProcWatcher_ProcessDeleted(Win32_Process process)
-        {
-            Debug.WriteLine("process deleted");
-        }
-
-        void ProcWatcher_ProcessCreated(Win32_Process process)
-        {
-            string name = process.Name;
-            Debug.WriteLine("process created");
-            AttachToProcess(name);
-        }
-
-        private void GetAllProjectsFromProject(Project project, List<Project> result)
-        {
-            if (project == null)
-            {
-                return;
-            }
-
-            result.Add(project);
-
-            if(project.ProjectItems == null)
-            {
-                return;
-            }
-
-            foreach (ProjectItem item in project.ProjectItems)
-            {
-                if (item != null)
-                {
-                    GetAllProjectsFromProject(item.Object as Project, result);
-                }
-            } 
-        } 
 
         /// <summary>
         /// This function is the callback used to execute a command when the a menu item is clicked.

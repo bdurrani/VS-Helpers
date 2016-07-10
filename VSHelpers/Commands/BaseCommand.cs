@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace BD.VSHelpers.Commands
 {
-    internal abstract class BaseCommand : OleMenuCommand
+    internal abstract class BaseCommand : OleMenuCommand, IDisposable
     {
         protected VSHelpersPackage Package { get; private set; }
 
@@ -60,6 +60,10 @@ namespace BD.VSHelpers.Commands
         /// Called to execute the command.
         /// </summary>
         protected abstract void OnExecute();
+
+        public virtual void Dispose()
+        {
+        }
     }
 
 }
