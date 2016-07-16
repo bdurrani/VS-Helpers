@@ -61,6 +61,9 @@ namespace BD.VSHelpers.Commands
         /// </summary>
         protected abstract void OnExecute();
 
+        /// <summary>
+        /// Perform any clean up required by the command.
+        /// </summary>
         public virtual void Dispose()
         {
         }

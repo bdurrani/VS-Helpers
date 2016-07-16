@@ -17,8 +17,7 @@ namespace BD.VSHelpers.Commands
 
         internal RunWithoutDebugCommand(VSHelpersPackage package)
             : base(package, new CommandID(GuidList.guidVSHelpersCmdSet, (int)PkgCmdIDList.cmdidStartWithoutDebug))
-        {
-        }
+        { }
 
         private void GetAllProjectsFromProject(Project project, List<Project> result)
         {
@@ -45,7 +44,7 @@ namespace BD.VSHelpers.Commands
 
         protected override void OnExecute()
         {
-            var dte = Package.GetDTE(); 
+            var dte = Package.GetDTE();
             SolutionBuild2 sb = (SolutionBuild2)dte.Solution.SolutionBuild;
 
             // get the name of the active project

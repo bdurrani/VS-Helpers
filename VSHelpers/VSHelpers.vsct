@@ -120,6 +120,7 @@
 
     <KeyBindings>
         <KeyBinding guid="guidVSHelpersCmdSet" id="cmdidCopyWithContext" key1="C" mod1="Control Shift" editor="guidSourceCodeTextEditor"/>
+        <KeyBinding guid="guidVSHelpersCmdSet" id="cmdidStartWithoutDebug" key1="D" mod1="Control Shift" editor="guidSourceCodeTextEditor"/>
     </KeyBindings>
 
 

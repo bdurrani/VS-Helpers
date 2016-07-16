@@ -1,6 +1,5 @@
 ﻿using BD.VSHelpers.Commands;
 using EnvDTE;
-using EnvDTE80;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using System;
@@ -9,8 +8,6 @@ using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Windows.Forms;
 
 namespace BD.VSHelpers
 {
@@ -78,11 +75,10 @@ namespace BD.VSHelpers
 
             var dte = GetDTE();
             _packageEvents = dte.Events.DTEEvents;
-            _packageEvents.OnBeginShutdown += PackageEvents_OnBeginShutdown;
-
-            AddCopyWithContextMenu(mcs);
+            _packageEvents.OnBeginShutdown += PackageEvents_OnBeginShutdown; 
 
             _commands.Add(new RunWithoutDebugCommand(this));
+            _commands.Add(new CopyWithContextCommand(this));
             foreach (var command in _commands)
             {
                 mcs.AddCommand(command);
@@ -97,27 +93,16 @@ namespace BD.VSHelpers
                 command.Dispose();
             }
             _commands.Clear();
-        }
+        } 
 
-        private void AddCopyWithContextMenu(OleMenuCommandService mcs)
+        /// <summary>
+        /// Options menu
+        /// </summary>
+        public OptionPageGrid Options
         {
-            // Create the command for the menu item.
-            CommandID menuCommandID = new CommandID(GuidList.guidVSHelpersCmdSet, (int)PkgCmdIDList.cmdidCopyWithContext);
-            var menuItem = new OleMenuCommand(MenuItemCallback, menuCommandID);
-            menuItem.BeforeQueryStatus += MenuCommand_BeforeQueryStatus;
-            mcs.AddCommand(menuItem);
-        }
-
-        void MenuCommand_BeforeQueryStatus(object sender, EventArgs e)
-        {
-            var menuCommand = sender as OleMenuCommand;
-            if (menuCommand != null)
+            get
             {
-                var dte = GetDTE();
-                Solution solution = (Solution)dte.Solution;
-                bool isSolutionOpen = solution.IsOpen;
-                menuCommand.Visible = isSolutionOpen;
-                menuCommand.Enabled = isSolutionOpen;
+                return (OptionPageGrid)this.GetDialogPage(typeof(OptionPageGrid));
             }
         }
 
@@ -130,131 +115,6 @@ namespace BD.VSHelpers
         public EnvDTE80.DTE2 GetDTE()
         {
             return (EnvDTE80.DTE2)GetService(typeof(EnvDTE.DTE));
-        }
-
-        /// <summary>
-        /// This function is the callback used to execute a command when the a menu item is clicked.
-        /// See the Initialize method to see how the menu item is associated to this function using
-        /// the OleMenuCommandService service and the MenuCommand class.
-        /// </summary> 
-        private void MenuItemCallback(object sender, EventArgs e)
-        {
-            var dte = GetDTE();
-            CopyCurrentMethod(dte);
-        }
-
-        private TextSelection GetSelection(DTE2 dte)
-        {
-            var activeDoc = dte.ActiveDocument;
-            Debug.WriteLine(activeDoc.ToDebugPrint());
-            return activeDoc.Selection as TextSelection;
-        }
-
-        private void CopyCurrentMethod(DTE2 dte)
-        {
-            var selection = GetSelection(dte);
-            if (selection == null)
-            {
-                return;
-            }
-
-            var selectionText = selection.Text.Trim();
-            var txtPoint = GetCursorTextPoint(dte);
-            string location = GetCodeElementNonRecursively(dte.ActiveDocument.ProjectItem.FileCodeModel.CodeElements, txtPoint);
-            OptionPageGrid page = (OptionPageGrid)GetDialogPage(typeof(OptionPageGrid));
-            if (page.ClipboardFormat == OptionPageGrid.CopyFormat.Slack)
-            {
-                string result = string.Format("```\n{0}\n```\n{2} Line {1}", selectionText, selection.CurrentLine, location);
-                System.Windows.Clipboard.SetText(result);
-            }
-
-            if (page.ClipboardFormat == OptionPageGrid.CopyFormat.RTF)
-            {
-                var rtf = new RichTextBox();
-                rtf.Font = new System.Drawing.Font("Consolas", 10);
-                rtf.Text = selectionText;
-                rtf.Font = new System.Drawing.Font("Calibri", 11);
-                rtf.AppendText(string.Format("\n{0}, Line {1}", location, selection.CurrentLine));
-                System.Windows.Clipboard.SetText(rtf.Rtf, System.Windows.TextDataFormat.Rtf);
-            }
-        }
-
-        private TextPoint GetCursorTextPoint(DTE2 dte)
-        {
-            try
-            {
-                var selection = dte.ActiveDocument.Selection as TextSelection;
-                return selection.ActivePoint;
-            }
-            catch (Exception)
-            {
-            }
-            return null;
-        }
-
-        private string GetCodeElementNonRecursively(CodeElements codeElements, TextPoint txtPoint)
-        {
-            if (codeElements == null)
-            {
-                return string.Empty;
-            }
-
-            var sb = new StringBuilder();
-            while (codeElements != null)
-            {
-                CodeElement foundElement = FindMatch(txtPoint, codeElements);
-                if (foundElement != null)
-                {
-                    switch (foundElement.Kind)
-                    {
-                        case vsCMElement.vsCMElementNamespace:
-                        case vsCMElement.vsCMElementClass:
-                        case vsCMElement.vsCMElementEnum:
-                            sb.Append(foundElement.Name + ".");
-                            break;
-                        default:
-                            break;
-                    }
-                }
-                codeElements = GetCodeElementMembers(foundElement);
-            }
-            return sb.ToString().TrimEnd('.');
-        }
-
-        private CodeElement FindMatch(TextPoint txtPoint, CodeElements codeElements)
-        {
-            if (codeElements == null)
-            {
-                return null;
-            }
-
-            foreach (CodeElement item in codeElements)
-            {
-                if (item.StartPoint.LessThan(txtPoint) && item.EndPoint.GreaterThan(txtPoint))
-                {
-                    Debug.WriteLine(item.ToDebugPrint());
-                    return item;
-                }
-            }
-            return null;
-        }
-
-        private CodeElements GetCodeElementMembers(CodeElement codeElement)
-        {
-            if (codeElement is CodeNamespace)
-            {
-                return (codeElement as CodeNamespace).Members;
-            }
-            else if (codeElement is CodeType)
-            {
-                return (codeElement as CodeType).Members;
-            }
-            else if (codeElement is CodeFunction)
-            {
-                return (codeElement as CodeFunction).Parameters;
-            }
-            return null;
-        }
-
+        } 
     }
 }
