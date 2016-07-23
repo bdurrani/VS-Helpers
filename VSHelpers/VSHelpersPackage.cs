@@ -1,4 +1,5 @@
 ﻿using BD.VSHelpers.Commands;
+using BD.VSHelpers.Options;
 using EnvDTE;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;

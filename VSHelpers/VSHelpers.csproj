@@ -128,7 +128,7 @@
     <Compile Include="Commands\RunWithoutDebugCommand.cs" />
     <Compile Include="DebugExtensions.cs" />
     <Compile Include="Guids.cs" />
-    <Compile Include="OptionsPage.cs">
+    <Compile Include="Options\OptionsPage.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="ProcessWatcher.cs">

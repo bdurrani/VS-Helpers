@@ -1,4 +1,5 @@
-﻿using EnvDTE;
+﻿using BD.VSHelpers.Options;
+using EnvDTE;
 using EnvDTE80;
 using System;
 using System.Collections.Generic;
