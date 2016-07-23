@@ -40,7 +40,7 @@ namespace BD.VSHelpers
             {
                 var currentDoc = documents.Item(i);
                 Debug.WriteLine("document name:" + currentDoc.Name);
-            } 
+            }
         }
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace BD.VSHelpers
         /// </summary>
         /// <param name="projects">projet collection</param>
         public static void ToDebugPrint(this IEnumerable<Project> projects)
-        { 
+        {
             foreach (Project item in projects)
             {
                 item.ToDebugPrint();
@@ -61,18 +61,29 @@ namespace BD.VSHelpers
         /// <param name="project">project to debug</param>
         public static void ToDebugPrint(this EnvDTE.Project project)
         {
-            string output;
-            if (string.IsNullOrEmpty(project.FullName))
+            try
             {
-                output = "Empty project name"; 
+                string output;
+                if (string.IsNullOrEmpty(project.FullName))
+                {
+                    output = "Empty project name";
+                }
+                else
+                {
+                    // full name: <fully qualified path to project>.csproj
+                    // language will be a guid
+                    output = string.Format("project name: {0} name: {1} code model: {2} unique name: {3}",
+                        project.FullName,
+                        project.Name,
+                        project.CodeModel != null ? project.CodeModel.Language : "<no codemodel>",
+                        project.UniqueName);
+                }
+                Debug.WriteLine(output);
             }
-            else
+            catch (Exception ex)
             {
-                // full name: <fully qualified path to project>.csproj
-                // language will be a guid
-                output = string.Format("project name: {0} name: {1} code model: {2} unique name: {3}", project.FullName, project.Name, project.CodeModel.Language, project.UniqueName);
+                Debug.WriteLine("exception {0} for project unique name {1}", ex.Message, project.UniqueName);
             }
-            Debug.WriteLine(output);
         }
 
         public static void ToDebugPrint(this EnvDTE.OutputGroup outputGroup)
@@ -85,7 +96,7 @@ namespace BD.VSHelpers
             foreach (vsCMElement item in Enum.GetValues(typeof(vsCMElement)))
             {
                 try
-                { 
+                {
                     Debug.WriteLine("testing " + item.ToString());
                     var function = activePoint.CodeElement[item] as CodeFunction;
                     if (function != null)
@@ -98,6 +109,6 @@ namespace BD.VSHelpers
 
                 }
             }
-        } 
+        }
     }
 }
