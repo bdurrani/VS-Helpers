@@ -16,6 +16,7 @@ See the [changelog](CHANGELOG.md) for changes and roadmap.
 ## Features
 
 - Copy source along with information about its location (class, method, line #)
+- Start without debugging and attach Visual Studio to the active project after a delay
  
 <!--## Contribute
 Check out the [contribution guidelines](CONTRIBUTING.md)
