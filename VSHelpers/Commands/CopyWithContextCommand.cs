@@ -20,7 +20,11 @@ namespace BD.VSHelpers.Commands
 
         protected override void OnBeforeQueryStatus()
         {
-            base.OnBeforeQueryStatus();
+            var dte = Package.GetDTE();
+            Solution solution = (Solution)dte.Solution;
+            bool isSolutionOpen = solution.IsOpen;
+            this.Visible = isSolutionOpen;
+            this.Enabled = isSolutionOpen;
         }
 
         protected override void OnExecute()
