@@ -11,8 +11,11 @@ namespace BD.VSHelpers
     {
         public delegate void ProcessEventHandler(Win32_Process process);
         // Process Events
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1009:DeclareEventHandlersCorrectly")]
         public event ProcessEventHandler ProcessCreated;
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1009:DeclareEventHandlersCorrectly")]
         public event ProcessEventHandler ProcessDeleted;
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1009:DeclareEventHandlersCorrectly")]
         public event ProcessEventHandler ProcessModified;
 
         // WMI WQL process query strings

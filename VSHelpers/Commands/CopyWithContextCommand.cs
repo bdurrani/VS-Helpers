@@ -60,7 +60,7 @@ namespace BD.VSHelpers.Commands
         private TextSelection GetSelection(DTE2 dte)
         {
             var activeDoc = dte.ActiveDocument;
-            Debug.WriteLine(activeDoc.ToDebugPrint());
+            activeDoc.ToDebugPrint();
             return activeDoc.Selection as TextSelection;
         }
 
@@ -117,7 +117,7 @@ namespace BD.VSHelpers.Commands
             {
                 if (item.StartPoint.LessThan(txtPoint) && item.EndPoint.GreaterThan(txtPoint))
                 {
-                    Debug.WriteLine(item.ToDebugPrint());
+                    item.ToDebugPrint();
                     return item;
                 }
             }
