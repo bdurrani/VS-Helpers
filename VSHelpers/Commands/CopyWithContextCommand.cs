@@ -48,7 +48,7 @@ namespace BD.VSHelpers.Commands
             if (page.ClipboardFormat == OptionPageGrid.CopyFormat.Slack)
             {
                 string result = string.Format("```\n{0}\n```\n{2} Line {1}", selectionText, selection.CurrentLine, location);
-                System.Windows.Clipboard.SetText(result);
+                System.Windows.Forms.Clipboard.SetDataObject(result, false, 5, 300);
             }
             else if (page.ClipboardFormat == OptionPageGrid.CopyFormat.RTF)
             {
@@ -57,7 +57,9 @@ namespace BD.VSHelpers.Commands
                 rtf.Text = selectionText;
                 rtf.Font = new System.Drawing.Font("Calibri", 11);
                 rtf.AppendText(string.Format("\n{0}, Line {1}", location, selection.CurrentLine));
-                System.Windows.Clipboard.SetText(rtf.Rtf, System.Windows.TextDataFormat.Rtf);
+                var dataObject = new DataObject();
+                dataObject.SetData(DataFormats.Rtf, rtf.Rtf);
+                System.Windows.Forms.Clipboard.SetDataObject(dataObject, false, 5, 300);
             }
         }
 
