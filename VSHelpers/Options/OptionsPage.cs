@@ -39,15 +39,19 @@ namespace BD.VSHelpers.Options
         public const string CategoryName = "General";
         private CopyFormat optionValue = CopyFormat.Slack;
 
-        /// <summary>
-        /// Additional property for binding the enum
-        /// </summary>
-        public IEnumerable<CopyFormat> CopyFormatEnumValues
+        private ICommand _clickCommand;
+
+        public ICommand RefreshCommand
         {
             get
             {
-                return Enum.GetValues(typeof(CopyFormat)).Cast<CopyFormat>();
+                return _clickCommand ?? (_clickCommand = new CommandHandler(() => RefreshAction(), true));
             }
+        }
+
+        public void RefreshAction()
+        {
+            return;
         }
 
         [Category(CategoryName)]
@@ -70,5 +74,28 @@ namespace BD.VSHelpers.Options
 
         #region Command
         #endregion
+    }
+
+    public class CommandHandler : ICommand
+    {
+        private Action _action;
+        private bool _canExecute;
+        public CommandHandler(Action action, bool canExecute)
+        {
+            _action = action;
+            _canExecute = canExecute;
+        }
+
+        public bool CanExecute(object parameter)
+        {
+            return _canExecute;
+        }
+
+        public event EventHandler CanExecuteChanged;
+
+        public void Execute(object parameter)
+        {
+            _action();
+        }
     }
 }

@@ -7,38 +7,38 @@
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <GroupBox Header="Command Options" Grid.Row ="0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Label Grid.Row="0" Grid.Column="0" Content="Clipboard Format:"/>
+                <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type local:CopyFormat}}}" SelectedItem="{Binding ClipboardFormat}" MinWidth="100">
+                </ComboBox>
+            </Grid>
+        </GroupBox>
+        <GroupBox Header="Hello group" Grid.Row ="1">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <GroupBox Header="Command Options" Grid.Row ="0">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="200" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <Label Grid.Row="0" Grid.Column="0" Content="Clipboard Format:"/>
-                        <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type local:CopyFormat}}}" SelectedItem="{Binding ClipboardFormat}" MinWidth="100">
-                        </ComboBox>
-                    </Grid>
-                </GroupBox>
-                <GroupBox Header="Hello group" Grid.Row ="1">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="200" />
-                        </Grid.ColumnDefinitions>
-                        <Label Grid.Row="0" Grid.Column="0" Content="Refresh Entry"/>
-                        <Button Content="Button" Grid.Row="0" Grid.Column="1"/>
-                    </Grid>
-                </GroupBox>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="200" />
+                </Grid.ColumnDefinitions>
+                <Label Grid.Row="0" Grid.Column="0" Content="Refresh Entry"/>
+                <Button Content="Button" Grid.Row="0" Grid.Column="1" Command="{Binding RefreshCommand}"/>
             </Grid>
+        </GroupBox>
+    </Grid>
 </UserControl>
