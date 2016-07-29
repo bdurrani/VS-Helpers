@@ -45,12 +45,12 @@ namespace BD.VSHelpers.Commands
             var txtPoint = GetCursorTextPoint(dte);
             string location = GetCodeElementNonRecursively(dte.ActiveDocument.ProjectItem.FileCodeModel.CodeElements, txtPoint);
             OptionPageGrid page = Package.Options;
-            if (page.ClipboardFormat == OptionPageGrid.CopyFormat.Slack)
+            if (page.ClipboardFormat == CopyFormat.Slack)
             {
                 string result = string.Format("```\n{0}\n```\n{2} Line {1}", selectionText, selection.CurrentLine, location);
                 System.Windows.Forms.Clipboard.SetDataObject(result, false, 5, 300);
             }
-            else if (page.ClipboardFormat == OptionPageGrid.CopyFormat.RTF)
+            else if (page.ClipboardFormat == CopyFormat.RTF)
             {
                 var rtf = new RichTextBox();
                 rtf.Font = new System.Drawing.Font("Consolas", 10);
