@@ -4,6 +4,7 @@ using EnvDTE;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.Diagnostics;
@@ -38,10 +39,9 @@ namespace BD.VSHelpers
     [Guid(GuidList.guidVSHelpersPkgString)]
     [ProvideOptionPage(typeof(OptionPageGrid), "VS Helpers", OptionPageGrid.CategoryName, 0, 0, false)]
     public sealed class VSHelpersPackage : Package
-    { 
-        private DTEEvents _packageEvents; 
+    {
+        private DTEEvents _packageEvents;
         private List<BaseCommand> _commands = new List<BaseCommand>();
-
         /// <summary>
         /// Default constructor of the package.
         /// Inside this method you can place any initialization code that does not require 
@@ -76,7 +76,7 @@ namespace BD.VSHelpers
 
             var dte = GetDTE();
             _packageEvents = dte.Events.DTEEvents;
-            _packageEvents.OnBeginShutdown += PackageEvents_OnBeginShutdown; 
+            _packageEvents.OnBeginShutdown += PackageEvents_OnBeginShutdown;
 
             _commands.Add(new RunWithoutDebugCommand(this));
             _commands.Add(new CopyWithContextCommand(this));
@@ -84,6 +84,8 @@ namespace BD.VSHelpers
             {
                 mcs.AddCommand(command);
             }
+
+            InitMRUMenu(mcs);
         }
 
         void PackageEvents_OnBeginShutdown()
@@ -94,7 +96,7 @@ namespace BD.VSHelpers
                 command.Dispose();
             }
             _commands.Clear();
-        } 
+        }
 
         /// <summary>
         /// Options menu
@@ -116,6 +118,54 @@ namespace BD.VSHelpers
         public EnvDTE80.DTE2 GetDTE()
         {
             return (EnvDTE80.DTE2)GetService(typeof(EnvDTE.DTE));
-        } 
+        }
+
+        private int numMRUItems = 4;
+        private int baseMRUID = (int)PkgCmdIDList.cmdIdBuildExe;
+        private List<string> mruList = new List<string>();
+
+        private void InitMRUMenu(OleMenuCommandService mcs)
+        {
+            for (int i = 0; i < this.numMRUItems; i++)
+            {
+                var cmdID = new CommandID(GuidList.guidVSHelpersCmdSet, this.baseMRUID + i);
+                var mc = new OleMenuCommand(new EventHandler(OnMRUExec), cmdID);
+                mc.BeforeQueryStatus += new EventHandler(OnMRUQueryStatus);
+                mcs.AddCommand(mc);
+                mruList.Add(i.ToString());
+            }
+        }
+
+        private void OnMRUExec(object sender, EventArgs e)
+        {
+            var menuCommand = sender as OleMenuCommand;
+            if (null != menuCommand)
+            {
+                int MRUItemIndex = menuCommand.CommandID.ID - this.baseMRUID;
+                if (MRUItemIndex >= 0 && MRUItemIndex < this.mruList.Count)
+                {
+                    string selection = this.mruList[MRUItemIndex] as string;
+                    for (int i = MRUItemIndex; i > 0; i--)
+                    {
+                        this.mruList[i] = this.mruList[i - 1];
+                    }
+                    this.mruList[0] = selection;
+                    System.Windows.Forms.MessageBox.Show(string.Format(CultureInfo.CurrentCulture, "Selected {0}", selection));
+                }
+            }
+        }
+
+        private void OnMRUQueryStatus(object sender, EventArgs e)
+        {
+            OleMenuCommand menuCommand = sender as OleMenuCommand;
+            if (null != menuCommand)
+            {
+                int MRUItemIndex = menuCommand.CommandID.ID - this.baseMRUID;
+                if (MRUItemIndex >= 0 && MRUItemIndex < this.mruList.Count)
+                {
+                    menuCommand.Text = this.mruList[MRUItemIndex] as string;
+                }
+            }
+        }
     }
 }

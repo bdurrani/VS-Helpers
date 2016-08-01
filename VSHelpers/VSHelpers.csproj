@@ -130,6 +130,7 @@
   <ItemGroup>
     <Compile Include="Commands\BaseCommand.cs" />
     <Compile Include="Commands\CopyWithContextCommand.cs" />
+    <Compile Include="Commands\DynamicItemMenuCommand.cs" />
     <Compile Include="Commands\RunWithoutDebugCommand.cs" />
     <Compile Include="DebugExtensions.cs" />
     <Compile Include="Guids.cs" />
@@ -195,6 +196,7 @@
   <ItemGroup>
     <VSCTCompile Include="VSHelpers.vsct">
       <ResourceName>Menus.ctmenu</ResourceName>
+      <SubType>Designer</SubType>
     </VSCTCompile>
   </ItemGroup>
   <ItemGroup>
