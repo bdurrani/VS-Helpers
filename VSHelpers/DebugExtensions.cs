@@ -2,6 +2,7 @@ using EnvDTE;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
 
 namespace BD.VSHelpers
 {
@@ -24,7 +25,7 @@ namespace BD.VSHelpers
             var startPoint = codeElement.StartPoint;
             string startPointString = startPoint.ToDebugPrint();
             var kind = codeElement.Kind;
-            var location = codeElement.InfoLocation; 
+            var location = codeElement.InfoLocation;
             var res = string.Format("name: {0} kind: {1} startpoint:{2} location: {3}", name, kind, startPointString, location);
             Debug.WriteLine(res);
         }
@@ -78,11 +79,20 @@ namespace BD.VSHelpers
                 {
                     // full name: <fully qualified path to project>.csproj
                     // language will be a guid
-                    output = string.Format("project name: {0} name: {1} code model: {2} unique name: {3}",
-                        project.FullName,
-                        project.Name,
-                        project.CodeModel != null ? project.CodeModel.Language : "<no codemodel>",
-                        project.UniqueName);
+                    var sb = new StringBuilder();
+                    sb.AppendFormat("project name: {0} ", project.FullName);
+                    sb.AppendFormat("name: {0} ", project.Name);
+                    sb.AppendFormat("code model: {0} ", project.CodeModel != null ? project.CodeModel.Language : "<no codemodel>");
+                    sb.AppendFormat("unique name: {0} ", project.UniqueName);
+
+                    var configurationManager = project.ConfigurationManager;
+                    if (configurationManager != null)
+                    {
+                        var activeConfiguration = configurationManager.ActiveConfiguration;
+                        var configurationName = activeConfiguration.ConfigurationName;
+                        sb.AppendFormat("configuraton name: {0} ", configurationName); 
+                    }
+                    output = sb.ToString();
                 }
                 Debug.WriteLine(output);
             }
