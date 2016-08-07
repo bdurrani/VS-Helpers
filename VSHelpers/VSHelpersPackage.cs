@@ -1,15 +1,18 @@
 ﻿using BD.VSHelpers.Commands;
 using BD.VSHelpers.Options;
 using EnvDTE;
+using EnvDTE80;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using Microsoft.Win32;
 
 namespace BD.VSHelpers
 {
@@ -80,12 +83,20 @@ namespace BD.VSHelpers
 
             _commands.Add(new RunWithoutDebugCommand(this));
             _commands.Add(new CopyWithContextCommand(this));
+            _commands.Add(new RunBuildsCommand(this));
             foreach (var command in _commands)
             {
                 mcs.AddCommand(command);
             }
+            //InitMRUMenu(mcs);
+        }
 
-            InitMRUMenu(mcs);
+        public RegistryKey RegistryKey
+        {
+            get
+            {
+                return UserRegistryRoot;
+            }
         }
 
         void PackageEvents_OnBeginShutdown()

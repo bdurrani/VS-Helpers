@@ -19,29 +19,6 @@ namespace BD.VSHelpers.Commands
             : base(package, new CommandID(GuidList.guidVSHelpersCmdSet, (int)PkgCmdIDList.cmdidStartWithoutDebug))
         { }
 
-        private void GetAllProjectsFromProject(Project project, List<Project> result)
-        {
-            if (project == null)
-            {
-                return;
-            }
-
-            result.Add(project);
-
-            if (project.ProjectItems == null)
-            {
-                return;
-            }
-
-            foreach (ProjectItem item in project.ProjectItems)
-            {
-                if (item != null)
-                {
-                    GetAllProjectsFromProject(item.Object as Project, result);
-                }
-            }
-        }
-
         protected override void OnExecute()
         {
             var dte = Package.GetDTE();
@@ -53,7 +30,7 @@ namespace BD.VSHelpers.Commands
             var results = new List<Project>();
             foreach (EnvDTE.Project project in dte.Solution.Projects)
             {
-                GetAllProjectsFromProject(project, results);
+                ProjectHelpers.GetAllProjectsFromProject(project, results);
             }
 
             results.ToDebugPrint();
@@ -67,10 +44,7 @@ namespace BD.VSHelpers.Commands
             }
 
             // try to figure out the build outputs of the project
-            var outputGroups = startupProject.First().ConfigurationManager.ActiveConfiguration.OutputGroups.OfType<EnvDTE.OutputGroup>();
-            var builtGroup = outputGroups.First(x => x.CanonicalName == "Built");
-
-            var fileUrls = ((object[])builtGroup.FileURLs).OfType<string>();
+            var fileUrls = ProjectHelpers.GetBuildOutputs(startupProject.First());
             var executables = fileUrls.Where(x => x.EndsWith(".exe", StringComparison.OrdinalIgnoreCase));
 
             if (!executables.Any())

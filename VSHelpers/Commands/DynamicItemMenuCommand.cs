@@ -1,13 +1,14 @@
 ﻿using Microsoft.VisualStudio.Shell;
 using System;
 using System.ComponentModel.Design;
+using System.Windows.Input;
 
 namespace BD.VSHelpers.Commands
 {
     /// <summary>
     /// https://msdn.microsoft.com/en-us/library/bb166492(v=vs.120).aspx
     /// </summary>
-    class DynamicItemMenuCommand: OleMenuCommand
+    class DynamicItemMenuCommand: OleMenuCommand, ICommand 
     {
         private Predicate<int> matches;
         public DynamicItemMenuCommand(CommandID rootId, Predicate<int> matches, EventHandler invokeHandler, EventHandler beforeQueryStatusHandler)
@@ -36,5 +37,17 @@ namespace BD.VSHelpers.Commands
             this.MatchedCommandId = 0;
             return false;
         }
+
+        public bool CanExecute(object parameter)
+        {
+            return true;
+        }
+
+        public void Execute(object parameter)
+        {
+
+        } 
+ 
+        public event EventHandler CanExecuteChanged;
     }
 }

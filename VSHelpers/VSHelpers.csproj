@@ -131,9 +131,14 @@
     <Compile Include="Commands\BaseCommand.cs" />
     <Compile Include="Commands\CopyWithContextCommand.cs" />
     <Compile Include="Commands\DynamicItemMenuCommand.cs" />
+    <Compile Include="Commands\ProjectHelpers.cs" />
+    <Compile Include="Commands\RunBuildsCommand.cs" />
     <Compile Include="Commands\RunWithoutDebugCommand.cs" />
+    <Compile Include="Data\ProjectBuildOutput.cs" />
+    <Compile Include="Data\VsHelperRepository.cs" />
     <Compile Include="DebugExtensions.cs" />
     <Compile Include="Guids.cs" />
+    <Compile Include="Interfaces\IVsHelperRepository.cs" />
     <Compile Include="Options\EnumBindingSourceExtension.cs" />
     <Compile Include="Options\OptionsPage.cs">
       <SubType>Component</SubType>

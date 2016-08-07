@@ -39,20 +39,7 @@ namespace BD.VSHelpers.Options
         public const string CategoryName = "General";
         private CopyFormat optionValue = CopyFormat.Slack;
 
-        private ICommand _clickCommand;
-
-        public ICommand RefreshCommand
-        {
-            get
-            {
-                return _clickCommand ?? (_clickCommand = new CommandHandler(() => RefreshAction(), true));
-            }
-        }
-
-        public void RefreshAction()
-        {
-            return;
-        }
+        private ICommand _refreshCommand;
 
         [Category(CategoryName)]
         [DisplayName("Copy format")]
@@ -73,6 +60,20 @@ namespace BD.VSHelpers.Options
         }
 
         #region Command
+
+        public ICommand RefreshCommand
+        {
+            get
+            {
+                return _refreshCommand ?? (_refreshCommand = new CommandHandler(() => RefreshAction(), true));
+            }
+        }
+
+        public void RefreshAction()
+        {
+            return;
+        }
+
         #endregion
     }
 
@@ -80,6 +81,8 @@ namespace BD.VSHelpers.Options
     {
         private Action _action;
         private bool _canExecute;
+        public event EventHandler CanExecuteChanged;
+
         public CommandHandler(Action action, bool canExecute)
         {
             _action = action;
@@ -89,9 +92,7 @@ namespace BD.VSHelpers.Options
         public bool CanExecute(object parameter)
         {
             return _canExecute;
-        }
-
-        public event EventHandler CanExecuteChanged;
+        } 
 
         public void Execute(object parameter)
         {

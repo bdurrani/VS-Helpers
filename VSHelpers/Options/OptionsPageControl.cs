@@ -2,6 +2,10 @@
 
 namespace BD.VSHelpers.Options
 {
+    /// <summary>
+    /// User control for custom property pages. This is a Windows Forms user control
+    /// that will host a WPF control
+    /// </summary>
     public partial class OptionsPageControl : UserControl
     {
         private readonly OptionPageGrid _optionsPage;

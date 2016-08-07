@@ -103,9 +103,8 @@
                 <CommandFlag>DefaultDisabled</CommandFlag>
                 <CommandFlag>DefaultInvisible</CommandFlag>
                 <CommandFlag>DynamicVisibility</CommandFlag>
-            </Button>
-
-            <Button guid="guidVSHelpersCmdSet" id="cmdIdBuildExe" type="Button">
+            </Button> 
+            <Button guid="guidVSHelpersCmdSet" id="cmdIdBuildExe" type="Button" priority ="0x0">
                 <Parent guid="guidVSHelpersCmdSet" id="BuildExeGroup" />
                 <CommandFlag>DynamicItemStart</CommandFlag>
                 <Strings>
