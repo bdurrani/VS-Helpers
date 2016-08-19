@@ -38,8 +38,15 @@ namespace BD.VSHelpers.Commands
 
             var selectionText = selection.Text.Trim();
             var txtPoint = GetCursorTextPoint(dte);
-            string location = GetCodeElementNonRecursively(dte.ActiveDocument.ProjectItem.FileCodeModel.CodeElements, txtPoint);
             OptionPageGrid page = Package.Options;
+            if (dte.ActiveDocument.ProjectItem.FileCodeModel == null)
+            {
+                // no file code model
+                CopyTextWithoutCodeModel(page, selection);
+                return;
+            }
+
+            string location = GetCodeElementNonRecursively(dte.ActiveDocument.ProjectItem.FileCodeModel.CodeElements, txtPoint);
             if (page.ClipboardFormat == OptionPageGrid.CopyFormat.Slack)
             {
                 string result = string.Format("```\n{0}\n```\n{2} Line {1}", selectionText, selection.CurrentLine, location);
@@ -52,6 +59,24 @@ namespace BD.VSHelpers.Commands
                 rtf.Text = selectionText;
                 rtf.Font = new System.Drawing.Font("Calibri", 11);
                 rtf.AppendText(string.Format("\n{0}, Line {1}", location, selection.CurrentLine));
+                System.Windows.Clipboard.SetText(rtf.Rtf, System.Windows.TextDataFormat.Rtf);
+            }
+        }
+
+        private static void CopyTextWithoutCodeModel(OptionPageGrid options, TextSelection selection)
+        { 
+            if (options.ClipboardFormat == OptionPageGrid.CopyFormat.Slack)
+            {
+                string result = string.Format("```\n{0}\n```\nLine {1}", selection.Text.Trim(), selection.CurrentLine);
+                System.Windows.Clipboard.SetText(result);
+            }
+            else if (options.ClipboardFormat == OptionPageGrid.CopyFormat.RTF)
+            {
+                var rtf = new RichTextBox();
+                rtf.Font = new System.Drawing.Font("Consolas", 10);
+                rtf.Text = selection.Text.Trim();
+                rtf.Font = new System.Drawing.Font("Calibri", 11);
+                rtf.AppendText(string.Format("\nLine {0}", selection.CurrentLine));
                 System.Windows.Clipboard.SetText(rtf.Rtf, System.Windows.TextDataFormat.Rtf);
             }
         }
